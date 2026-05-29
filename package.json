@@ -1,0 +1,21 @@
+{
+  "name": "strudelrack",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev:client": "bun --filter @strudelrack/client dev",
+    "dev:server": "bun --filter @strudelrack/server dev",
+    "test": "bun test",
+    "typecheck": "bun --filter '*' typecheck"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "^5.6.0"
+  }
+}

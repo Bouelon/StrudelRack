@@ -1,0 +1,39 @@
+{
+  "id": "drum-machine-kick",
+  "name": "808/909 Kick",
+  "author": "strudelrack",
+  "version": "1.0.0",
+  "type": "instrument",
+  "tags": ["kick", "drums", "808", "909", "analog", "drum-machine"],
+  "description": "Classic TR-808/909 bass drum sample with tune, drive and a programmable 16-step pattern.",
+  "strudelCode": "s(\"{{machine}}\").struct(\"{{pattern}}\").speed({{tune}}).shape({{drive}}).release({{decay}}).gain({{gain}}).room({{room}})",
+  "params": [
+    { "id": "machine", "label": "Machine", "type": "select", "options": ["808bd", "909"], "default": "909", "showInNodeView": true },
+    {
+      "id": "pattern",
+      "label": "Pattern",
+      "type": "steps",
+      "stepCount": 16,
+      "onValue": "1",
+      "default": ["1", "", "", "", "1", "", "", "", "1", "", "", "", "1", "", "", ""]
+    },
+    { "id": "tune", "label": "Tune", "type": "knob", "min": 0.5, "max": 2, "default": 1, "showInNodeView": true },
+    { "id": "drive", "label": "Drive", "type": "knob", "min": 0, "max": 0.8, "default": 0.2, "showInNodeView": true },
+    { "id": "decay", "label": "Decay", "type": "knob", "min": 0.05, "max": 1, "default": 0.4, "unit": "s" },
+    { "id": "gain", "label": "Gain", "type": "knob", "min": 0, "max": 1.5, "default": 1.0 },
+    { "id": "room", "label": "Room", "type": "knob", "min": 0, "max": 1, "default": 0.05 }
+  ],
+  "visual": {
+    "panelColor": "#1a0d12",
+    "accentColor": "#ff4444",
+    "knobStyle": "black-vintage",
+    "panelTexture": "brushed-metal",
+    "hasVuMeter": true,
+    "panelWidthHP": 12
+  },
+  "ports": {
+    "inputs": [],
+    "outputs": [{ "id": "out", "label": "Out", "type": "audio" }]
+  },
+  "createdAt": "2026-05-30T00:00:00Z"
+}

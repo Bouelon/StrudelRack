@@ -1,0 +1,158 @@
+@import 'tailwindcss';
+
+/* ── Eurorack theme tokens ───────────────────────────────────────────────── */
+@theme {
+  --color-bg: #0d0d0f;
+  --color-panel: #1a1a20;
+  --color-panel-raised: #222228;
+  --color-accent-green: #39ff14;
+  --color-accent-amber: #ffb347;
+  --color-accent-purple: #9b59ff;
+  --color-accent-cyan: #00e5ff;
+  --color-text-dim: #555560;
+  --color-text: #c8c8d0;
+  --color-led-on: #ff4444;
+  --color-led-off: #2a0808;
+
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-cond: 'Barlow Condensed', 'Rajdhani', sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-cond);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Engraved label effect */
+.engraved {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.05), 0 -1px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* ── Module panel (Rack View) ────────────────────────────────────────────── */
+.module-panel {
+  position: relative;
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-texture-brushed-metal {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.015) 0 1px,
+    transparent 1px 3px
+  );
+}
+.panel-texture-matte-plastic {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+.panel-texture-wood-grain {
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.12) 0 2px,
+    transparent 2px 6px
+  );
+}
+.panel-texture-anodized {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.03), transparent 40%);
+}
+
+/* Decorative corner screws */
+.screw {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #555, #111);
+  box-shadow: inset 0 0 1px rgba(0, 0, 0, 0.9);
+}
+.screw::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  border-top: 1px solid rgba(0, 0, 0, 0.6);
+  transform: rotate(45deg);
+}
+
+/* ── Step grid LEDs ──────────────────────────────────────────────────────── */
+.step-led {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: #1a1a1a;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+  border: 1px solid #000;
+  transition: box-shadow 0.05s;
+}
+.step-led.on {
+  box-shadow:
+    inset 0 0 2px rgba(255, 255, 255, 0.3),
+    0 0 8px 1px var(--led-accent, #39ff14);
+  background: var(--led-accent, #39ff14);
+}
+.step-led.playhead {
+  outline: 1px solid #fff;
+  outline-offset: 1px;
+}
+
+/* ── Node graph card ─────────────────────────────────────────────────────── */
+.module-node {
+  background: var(--color-panel);
+  border: 1px solid #2a2a32;
+  border-top: 3px solid;
+  border-radius: 4px;
+  font-family: var(--font-cond);
+  color: var(--color-text);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+.module-node.selected {
+  box-shadow: 0 0 0 1px currentColor, 0 0 16px 2px var(--node-accent, #39ff14);
+}
+.node-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.node-params {
+  display: flex;
+  gap: 6px;
+  padding: 4px 8px 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* React Flow dark surface tweaks */
+.react-flow__background {
+  background: var(--color-bg);
+}
+.react-flow__attribution {
+  display: none;
+}
+
+/* webaudio-controls render hint */
+webaudio-knob,
+webaudio-slider,
+webaudio-switch {
+  display: inline-block;
+}

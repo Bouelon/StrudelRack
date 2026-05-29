@@ -1,0 +1,30 @@
+{
+  "id": "fm-pad",
+  "name": "FM Pad",
+  "author": "strudelrack",
+  "version": "1.0.0",
+  "type": "instrument",
+  "tags": ["pad", "fm", "ambient", "chords"],
+  "description": "Lush FM pad over a slowly cycling chord. Wide stereo, deep reverb.",
+  "strudelCode": "note(\"{{notes}}\").s(\"sine\").fm({{harmonics}}).room({{room}}).pan({{pan}}).gain({{gain}})",
+  "params": [
+    { "id": "notes", "label": "Chord", "type": "code", "default": "<c3 eb3 g3 bb3>" },
+    { "id": "harmonics", "label": "FM", "type": "knob", "min": 1, "max": 8, "step": 1, "default": 2, "showInNodeView": true },
+    { "id": "room", "label": "Room", "type": "knob", "min": 0, "max": 1, "default": 0.5, "showInNodeView": true },
+    { "id": "pan", "label": "Pan", "type": "knob", "min": -1, "max": 1, "default": 0 },
+    { "id": "gain", "label": "Gain", "type": "knob", "min": 0, "max": 1.5, "default": 0.6 }
+  ],
+  "visual": {
+    "panelColor": "#0d0d1a",
+    "accentColor": "#9b59ff",
+    "knobStyle": "vintage-white",
+    "panelTexture": "matte-plastic",
+    "hasOscilloscope": true,
+    "panelWidthHP": 12
+  },
+  "ports": {
+    "inputs": [],
+    "outputs": [{ "id": "out", "label": "Out", "type": "audio" }]
+  },
+  "createdAt": "2026-05-30T00:00:00Z"
+}

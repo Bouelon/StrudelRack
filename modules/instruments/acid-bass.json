@@ -1,0 +1,36 @@
+{
+  "id": "acid-bass",
+  "name": "Acid Bass",
+  "author": "strudelrack",
+  "version": "1.0.0",
+  "type": "instrument",
+  "tags": ["bass", "acid", "303", "sawtooth"],
+  "description": "Resonant sawtooth bassline with a 16-step sequencer. The classic squelch.",
+  "strudelCode": "note(\"{{steps}}\").s(\"sawtooth\").cutoff({{cutoff}}).resonance({{res}}).gain({{gain}}).room({{room}})",
+  "params": [
+    {
+      "id": "steps",
+      "label": "Sequence",
+      "type": "steps",
+      "stepCount": 16,
+      "default": ["0", "", "3", "0", "7", "", "", "0", "0", "", "3", "0", "10", "", "7", ""]
+    },
+    { "id": "cutoff", "label": "Cutoff", "type": "knob", "min": 200, "max": 4000, "default": 800, "unit": "Hz", "showInNodeView": true },
+    { "id": "res", "label": "Reso", "type": "knob", "min": 0, "max": 1, "default": 0.6, "showInNodeView": true },
+    { "id": "gain", "label": "Gain", "type": "knob", "min": 0, "max": 1.5, "default": 0.9 },
+    { "id": "room", "label": "Room", "type": "knob", "min": 0, "max": 1, "default": 0.15 }
+  ],
+  "visual": {
+    "panelColor": "#0d1a0d",
+    "accentColor": "#39ff14",
+    "knobStyle": "black-vintage",
+    "panelTexture": "matte-plastic",
+    "hasOscilloscope": true,
+    "panelWidthHP": 16
+  },
+  "ports": {
+    "inputs": [],
+    "outputs": [{ "id": "out", "label": "Out", "type": "audio" }]
+  },
+  "createdAt": "2026-05-30T00:00:00Z"
+}

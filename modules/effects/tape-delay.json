@@ -1,0 +1,27 @@
+{
+  "id": "tape-delay",
+  "name": "Tape Delay",
+  "author": "strudelrack",
+  "version": "1.0.0",
+  "type": "effect",
+  "tags": ["delay", "echo", "tape", "time"],
+  "description": "Warm feedback delay. Patch an instrument into it for dub echoes.",
+  "strudelCode": ".delay({{wet}}).delaytime({{time}}).delayfeedback({{feedback}})",
+  "params": [
+    { "id": "time", "label": "Time", "type": "knob", "min": 0.1, "max": 1.0, "default": 0.4, "unit": "s", "showInNodeView": true },
+    { "id": "feedback", "label": "Feedback", "type": "knob", "min": 0, "max": 0.95, "default": 0.5, "showInNodeView": true },
+    { "id": "wet", "label": "Wet", "type": "knob", "min": 0, "max": 1, "default": 0.5, "showInNodeView": true }
+  ],
+  "visual": {
+    "panelColor": "#1a0d0d",
+    "accentColor": "#ff6b6b",
+    "knobStyle": "bakelite",
+    "panelTexture": "wood-grain",
+    "panelWidthHP": 10
+  },
+  "ports": {
+    "inputs": [{ "id": "in", "label": "In", "type": "audio" }],
+    "outputs": [{ "id": "out", "label": "Out", "type": "audio" }]
+  },
+  "createdAt": "2026-05-30T00:00:00Z"
+}

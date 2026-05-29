@@ -1,0 +1,28 @@
+{
+  "id": "lo-fi-filter",
+  "name": "Lo-Fi Filter",
+  "author": "strudelrack",
+  "version": "1.0.0",
+  "type": "effect",
+  "tags": ["filter", "lofi", "bitcrush", "vinyl"],
+  "description": "Low-pass filter with bit-crush and an optional vinyl coarse-down.",
+  "strudelCode": ".cutoff({{cutoff}}).resonance({{res}}).crush({{crush}}).coarse({{vinyl ? 4 : 1}})",
+  "params": [
+    { "id": "cutoff", "label": "Cutoff", "type": "knob", "min": 100, "max": 5000, "default": 1200, "unit": "Hz", "showInNodeView": true },
+    { "id": "res", "label": "Reso", "type": "knob", "min": 0, "max": 1, "default": 0.3 },
+    { "id": "crush", "label": "Crush", "type": "knob", "min": 1, "max": 16, "step": 1, "default": 8, "unit": "bit", "showInNodeView": true },
+    { "id": "vinyl", "label": "Vinyl", "type": "toggle", "default": false }
+  ],
+  "visual": {
+    "panelColor": "#12120a",
+    "accentColor": "#d4c97a",
+    "knobStyle": "davies1900",
+    "panelTexture": "anodized",
+    "panelWidthHP": 8
+  },
+  "ports": {
+    "inputs": [{ "id": "in", "label": "In", "type": "audio" }],
+    "outputs": [{ "id": "out", "label": "Out", "type": "audio" }]
+  },
+  "createdAt": "2026-05-30T00:00:00Z"
+}

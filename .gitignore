@@ -1,0 +1,32 @@
+# dependencies
+node_modules/
+.bun/
+
+# builds
+dist/
+build/
+*.tsbuildinfo
+
+# vite
+**/.vite/
+.vite/
+
+# logs
+*.log
+npm-debug.log*
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# sqlite (Phase 4 runtime db)
+*.sqlite
+*.sqlite3
+*.db
