@@ -5,6 +5,7 @@
 import { create } from 'zustand'
 import type { ModuleDef, ParamValue } from '@shared/index'
 
+import kickDesigner from '../../../modules/instruments/kick-designer.json'
 import euclideanKick from '../../../modules/instruments/euclidean-kick.json'
 import drumMachineKick from '../../../modules/instruments/drum-machine-kick.json'
 import acidBass from '../../../modules/instruments/acid-bass.json'
@@ -13,6 +14,7 @@ import tapeDelay from '../../../modules/effects/tape-delay.json'
 import lofiFilter from '../../../modules/effects/lo-fi-filter.json'
 
 const SEED: ModuleDef[] = [
+  kickDesigner as ModuleDef,
   drumMachineKick as ModuleDef,
   euclideanKick as ModuleDef,
   acidBass as ModuleDef,

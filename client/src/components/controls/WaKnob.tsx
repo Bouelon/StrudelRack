@@ -55,7 +55,7 @@ export const WaKnob = ({
     else el.value = value
   }, [value])
 
-  const readout = step >= 1 ? value.toFixed(0) : value.toFixed(2)
+  const readout = step >= 1 ? value.toFixed(0) : step >= 0.01 ? value.toFixed(2) : value.toFixed(3)
 
   return (
     <div className="flex flex-col items-center gap-0.5 select-none">

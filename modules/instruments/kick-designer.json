@@ -1,0 +1,46 @@
+{
+  "id": "kick-designer",
+  "name": "Kick Designer",
+  "author": "strudelrack",
+  "version": "1.0.0",
+  "type": "instrument",
+  "tags": ["kick", "drums", "synth", "sub", "808", "design"],
+  "description": "Fully synthesized kick à la Kick 2 / SubLab: pitch envelope (punch), ADSR body, drive and tone. No samples — built from a sub oscillator.",
+  "strudelCode": "note(\"{{tune}}\").s(\"{{wave}}\").struct(\"{{pattern}}\").penv({{punch}}).pdecay({{pitchTime}}).pcurve(1).attack({{attack}}).decay({{decay}}).sustain({{sustain}}).release({{release}}).distort({{drive}}).lpf({{tone}}).gain({{gain}}).room({{room}})",
+  "params": [
+    {
+      "id": "pattern",
+      "label": "Pattern",
+      "type": "steps",
+      "stepCount": 16,
+      "onValue": "1",
+      "default": ["1", "", "", "", "1", "", "", "", "1", "", "", "", "1", "", "", ""]
+    },
+    { "id": "wave", "label": "Wave", "type": "select", "options": ["sine", "triangle", "sawtooth", "square"], "default": "sine" },
+    { "id": "tune", "label": "Tune", "type": "knob", "min": 24, "max": 48, "step": 1, "default": 33, "unit": "st", "showInNodeView": true },
+    { "id": "punch", "label": "Punch", "type": "knob", "min": 0, "max": 60, "step": 1, "default": 36, "unit": "st", "showInNodeView": true },
+    { "id": "pitchTime", "label": "Pitch T", "type": "knob", "min": 0.005, "max": 0.3, "step": 0.005, "default": 0.05, "unit": "s" },
+    { "id": "attack", "label": "Attack", "type": "knob", "min": 0.001, "max": 0.05, "step": 0.001, "default": 0.002, "unit": "s" },
+    { "id": "decay", "label": "Decay", "type": "knob", "min": 0.05, "max": 1.5, "step": 0.01, "default": 0.45, "unit": "s" },
+    { "id": "sustain", "label": "Sustain", "type": "knob", "min": 0, "max": 1, "step": 0.01, "default": 0 },
+    { "id": "release", "label": "Release", "type": "knob", "min": 0, "max": 0.5, "step": 0.01, "default": 0.1, "unit": "s" },
+    { "id": "drive", "label": "Drive", "type": "knob", "min": 0, "max": 4, "step": 0.01, "default": 0.8, "showInNodeView": true },
+    { "id": "tone", "label": "Tone", "type": "knob", "min": 200, "max": 18000, "default": 8000, "unit": "Hz" },
+    { "id": "gain", "label": "Gain", "type": "knob", "min": 0, "max": 1.5, "step": 0.01, "default": 1.0 },
+    { "id": "room", "label": "Room", "type": "knob", "min": 0, "max": 1, "step": 0.01, "default": 0.05 }
+  ],
+  "visual": {
+    "panelColor": "#15100d",
+    "accentColor": "#ff5e3a",
+    "knobStyle": "black-vintage",
+    "panelTexture": "brushed-metal",
+    "hasOscilloscope": false,
+    "hasVuMeter": true,
+    "panelWidthHP": 22
+  },
+  "ports": {
+    "inputs": [],
+    "outputs": [{ "id": "out", "label": "Out", "type": "audio" }]
+  },
+  "createdAt": "2026-05-30T00:00:00Z"
+}
