@@ -38,23 +38,27 @@ export const NodeGraph = () => {
   // nodes from the store when modules are added/removed, preserving existing
   // node objects (dimensions + live position).
   const [rfNodes, setRfNodes, onNodesChangeRaw] = useNodesState<Node>([])
-  const idsKey = instances.map((i) => i.instanceId).join(',')
 
   useEffect(() => {
     setRfNodes((prev) => {
       const prevById = new Map(prev.map((n) => [n.id, n]))
-      return instances.map(
-        (i) =>
-          prevById.get(i.instanceId) ?? {
+      return instances.map((i) => {
+        const existing = prevById.get(i.instanceId)
+        if (!existing)
+          return {
             id: i.instanceId,
             type: 'module',
             position: i.nodePosition,
             data: { instanceId: i.instanceId },
-          },
-      )
+          }
+        // Don't fight a local drag; otherwise reflect remote position moves.
+        if (existing.dragging) return existing
+        if (existing.position.x !== i.nodePosition.x || existing.position.y !== i.nodePosition.y)
+          return { ...existing, position: i.nodePosition }
+        return existing
+      })
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idsKey])
+  }, [instances, setRfNodes])
 
   const edges: Edge[] = useMemo(
     () =>

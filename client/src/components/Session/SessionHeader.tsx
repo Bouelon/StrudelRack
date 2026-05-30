@@ -2,8 +2,16 @@
 import { useRack } from '../../store/rackStore'
 import { initStrudelEngine } from '../../engine/strudel'
 import { ViewToggle } from './ViewToggle'
+import { ParticipantList } from './ParticipantList'
+import type { ConnStatus } from '../../collab/useCollab'
 
-export const SessionHeader = ({ sessionCode }: { sessionCode?: string }) => {
+export const SessionHeader = ({
+  sessionCode,
+  status = 'offline',
+}: {
+  sessionCode?: string
+  status?: ConnStatus
+}) => {
   const isPlaying = useRack((s) => s.isPlaying)
   const setPlaying = useRack((s) => s.setPlaying)
   const bpm = useRack((s) => s.bpm)
@@ -52,10 +60,16 @@ export const SessionHeader = ({ sessionCode }: { sessionCode?: string }) => {
       </label>
 
       <div className="ml-auto flex items-center gap-4">
+        <ParticipantList status={status} />
         {sessionCode && (
-          <span className="font-mono text-xs text-[var(--color-text-dim)]">
+          <button
+            type="button"
+            title="Copy room code"
+            onClick={() => navigator.clipboard?.writeText(sessionCode)}
+            className="font-mono text-xs text-[var(--color-text-dim)] hover:text-[var(--color-text)]"
+          >
             room <span className="text-[var(--color-accent-cyan)]">{sessionCode}</span>
-          </span>
+          </button>
         )}
         <ViewToggle />
       </div>

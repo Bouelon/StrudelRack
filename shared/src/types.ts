@@ -117,6 +117,15 @@ export interface Patch {
 
 // ── WebSocket protocol — discriminated union, exhaustive switch required ───────
 export type WSMessage =
+  | {
+      // Full session snapshot sent by the server to a newly joined client.
+      type: 'session_sync'
+      bpm: number
+      playing: boolean
+      instances: ModuleInstance[]
+      edges: ModuleEdge[]
+      participants: Participant[]
+    }
   | { type: 'join'; userId: string; displayName: string }
   | { type: 'leave'; userId: string }
   | { type: 'bpm_change'; bpm: number; originUserId: string }

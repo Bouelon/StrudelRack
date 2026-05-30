@@ -75,6 +75,28 @@ Non-obvious decisions taken while building StrudelRack. Newest first.
 - Server (`bun server/src/index.ts`) serves `/api/health` and `/api/modules` (reads seed JSON).
   The server never executes Strudel code — JSON store/relay only.
 
+## Phase 3 — collaboration (shared-rack model)
+- **Shared single rack, not per-user racks.** Everyone in a room edits the same
+  `instances`/`edges`; the existing compiler already stacks them all, so the jam is the sum
+  of everyone's modules. Simpler and more "play together" than the spec's per-user racks
+  (which can come later — instances already carry `userId`).
+- **Authoritative WS relay, not Yjs (yet).** The Bun server keeps the room's canonical state
+  (`server/src/ws/rooms.ts`) so late joiners get a `session_sync` snapshot; live edits are
+  relayed verbatim to peers via Bun's topic pub/sub (`ws.publish` excludes the sender → no
+  self-echo). Yjs/CRDT cursors remain a Phase-5 nicety; plain relay covers the MVP and there
+  are no offline-merge requirements.
+- **Echo guard in the store.** `rackStore` actions broadcast via a module-level `netSend`;
+  applying a remote message runs the same action inside `runMuted()` so it mutates state
+  without re-broadcasting. New `session_sync` WSMessage added to the shared union.
+- **Bun WebSocket via the default-export form** (`{ port, fetch, websocket }`) so `fetch`
+  receives `server` for `server.upgrade()` and `bun --hot` reuses the port. Server still never
+  runs Strudel — it stores/relays JSON only.
+- **Shared transport + BPM** are broadcast; **view mode is local-only** (each user picks
+  Rack/Node independently). Node positions sync on drag-end (not per-frame) to keep traffic low;
+  the Node view reflects remote moves for non-dragging nodes.
+- **Room codes** like `TRM-4F9` (`shared/collab.ts`, ambiguity-free alphabet). `LOCAL` = solo.
+  Dev: Vite proxies `/ws` → `:3001`. Verified with a two-client relay smoke test.
+
 ## Open / deferred
 - Phase 3: Bun/Hono WebSocket server, rooms by code, shared BPM clock, Yjs awareness.
 - Phase 4: SQLite registry + "Package as Module" upload + versioning (client currently bundles

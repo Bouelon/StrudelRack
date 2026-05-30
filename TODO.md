@@ -44,14 +44,17 @@
 
 ---
 
-## Phase 3 — Session + Collab ⬜
-- [ ] Serveur Bun/Hono WebSocket (`server/src/ws/handler.ts`)
-- [ ] Création de room + join par code (`TRM-4F9`)
-- [ ] Protocole WSMessage (déjà typé dans `shared`) — switch exhaustif côté serveur + client
-- [ ] BPM partagé + synchro d'horloge (`clock.ts` client ↔ `ws/clock.ts` serveur)
-- [ ] Diffusion des changements module/edge
-- [ ] Liste des participants + awareness Yjs (curseurs colorés dans le node graph)
-- [ ] Client : `collab/yjsProvider.ts`, `collab/awareness.ts`, `store/sessionStore.ts`
+## Phase 3 — Session + Collab 🟡 (MVP fait, à tester à 2 onglets)
+- [x] Serveur Bun WebSocket + état autoritatif par room (`server/src/ws/rooms.ts`)
+- [x] Création de room + join par code (`TRM-4F9`) — page d'accueil `Home`
+- [x] Protocole WSMessage (switch exhaustif client + serveur, `session_sync` ajouté)
+- [x] BPM + transport partagés
+- [x] Diffusion des changements module/edge/position (relais Bun pub/sub, no-echo)
+- [x] Liste des participants + statut de connexion (`ParticipantList`)
+- [ ] À valider : test réel à 2 onglets/navigateurs dans la même room
+- [ ] (Phase 5) Awareness Yjs : curseurs colorés temps réel dans le node graph
+- [ ] (Option) racks par utilisateur au lieu du rack partagé unique
+- [ ] (Option) synchro d'horloge fine (`clock_tick`) pour un timing sample-accurate
 
 ## Phase 4 — Module Registry ⬜
 - [x] Endpoint `/api/modules` (lit les JSON seed) 🟡 amorcé

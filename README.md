@@ -14,7 +14,7 @@ Both views read/write the same Zustand store, so a knob turn and a new cable sta
 |------|-------|-------|
 | 1 | Audio engine + solo rack (compiler, controls, transport, CodePane) | ✅ built |
 | 2 | Node Graph view (React Flow, edge-aware compiler, view toggle) | ✅ built |
-| 3 | Session + collab (Bun/Hono WS, rooms, Yjs) | ⏳ not started |
+| 3 | Session + collab (Bun WS, rooms, shared rack, presence) | 🟡 MVP built (test with 2 tabs) |
 | 4 | Module registry (SQLite, browser, upload) | 🟡 browser + `/api/modules` done; SQLite/upload pending |
 | 5 | Polish (patches, share links, mobile, real skins, CodeMirror) | ⏳ deferred |
 
@@ -43,8 +43,13 @@ bun run dev:client
 bun run dev:server
 ```
 
-Click **▶ Play** (a user gesture is required to start the AudioContext), then add modules
-from the registry panel on the left.
+On the home screen, **Create a jam** (or join with a code, or play solo). Click **▶ Play**
+(a user gesture is required to start the AudioContext), then add modules from the registry
+panel on the left.
+
+**Collaboration**: run the server too, open the app in two tabs, and join the same room
+code — modules, knob moves, cables, BPM and transport sync live. (Vite proxies `/ws` to the
+server, so the dev client must be running for WebSocket to reach `:3001`.)
 
 ## Test & typecheck
 
