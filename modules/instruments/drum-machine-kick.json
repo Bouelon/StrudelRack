@@ -32,7 +32,7 @@
     "panelWidthHP": 12
   },
   "ports": {
-    "inputs": [],
+    "inputs": [{ "id": "trig", "label": "Trig", "type": "trigger" }],
     "outputs": [{ "id": "out", "label": "Out", "type": "audio" }]
   },
   "createdAt": "2026-05-30T00:00:00Z"
