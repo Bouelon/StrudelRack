@@ -111,6 +111,62 @@ body {
   outline-offset: 1px;
 }
 
+/* ── Per-step note cells ─────────────────────────────────────────────────── */
+.note-step {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: stretch;
+}
+.note-step-toggle {
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  line-height: 1;
+  padding: 4px 0;
+  border-radius: 3px;
+  border: 1px solid #000;
+  background: #1a1a1a;
+  color: #555;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+.note-step.on .note-step-toggle {
+  background: var(--led-accent, #39ff14);
+  color: #000;
+  box-shadow: 0 0 6px 1px var(--led-accent, #39ff14);
+}
+.note-step.playhead .note-step-toggle {
+  outline: 1px solid #fff;
+  outline-offset: 1px;
+}
+.note-step-select {
+  font-family: var(--font-mono, monospace);
+  font-size: 8px;
+  background: #15151a;
+  color: var(--color-text);
+  border: 1px solid #000;
+  border-radius: 2px;
+  padding: 0;
+}
+
+/* ── Node port labels ────────────────────────────────────────────────────── */
+.port-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono, monospace);
+  font-size: 7px;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--color-text-dim, #888);
+  pointer-events: none;
+}
+.port-label-in {
+  left: 12px;
+}
+.port-label-out {
+  right: 12px;
+}
+
 /* ── Node graph card ─────────────────────────────────────────────────────── */
 .module-node {
   background: var(--color-panel);

@@ -16,13 +16,15 @@ import {
   type EdgeTypes,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
+import type { PortType } from '@shared/index'
 import { useRack } from '../../store/rackStore'
 import { useRegistry } from '../../store/registryStore'
 import { ModuleNode } from './ModuleNode'
 import { AudioEdge } from './AudioEdge'
+import { TriggerEdge } from './TriggerEdge'
 
 const nodeTypes: NodeTypes = { module: ModuleNode }
-const edgeTypes: EdgeTypes = { audioEdge: AudioEdge }
+const edgeTypes: EdgeTypes = { audioEdge: AudioEdge, triggerEdge: TriggerEdge }
 
 export const NodeGraph = () => {
   const instances = useRack((s) => s.instances)
@@ -60,17 +62,49 @@ export const NodeGraph = () => {
     })
   }, [instances, setRfNodes])
 
+  // Resolve a port's declared type so cables can be coloured / validated by kind.
+  const outPortType = useCallback(
+    (instanceId: string, portId: string): PortType => {
+      const inst = instances.find((i) => i.instanceId === instanceId)
+      const def = inst ? byId.get(inst.defId) : undefined
+      return def?.ports.outputs.find((p) => p.id === portId)?.type ?? 'audio'
+    },
+    [instances, byId],
+  )
+  const inPortType = useCallback(
+    (instanceId: string, portId: string): PortType => {
+      const inst = instances.find((i) => i.instanceId === instanceId)
+      const def = inst ? byId.get(inst.defId) : undefined
+      return def?.ports.inputs.find((p) => p.id === portId)?.type ?? 'audio'
+    },
+    [instances, byId],
+  )
+
   const edges: Edge[] = useMemo(
     () =>
-      storeEdges.map((e) => ({
-        id: e.id,
-        source: e.sourceInstanceId,
-        target: e.targetInstanceId,
-        sourceHandle: e.sourcePortId,
-        targetHandle: e.targetPortId,
-        type: 'audioEdge',
-      })),
-    [storeEdges],
+      storeEdges.map((e) => {
+        const isTrigger = outPortType(e.sourceInstanceId, e.sourcePortId) === 'trigger'
+        return {
+          id: e.id,
+          source: e.sourceInstanceId,
+          target: e.targetInstanceId,
+          sourceHandle: e.sourcePortId,
+          targetHandle: e.targetPortId,
+          type: isTrigger ? 'triggerEdge' : 'audioEdge',
+        }
+      }),
+    [storeEdges, outPortType],
+  )
+
+  // Only allow same-type connections (audio↔audio, trigger↔trigger).
+  const isValidConnection = useCallback(
+    (conn: Connection | Edge) => {
+      if (!conn.source || !conn.target || conn.source === conn.target) return false
+      const src = outPortType(conn.source, conn.sourceHandle ?? 'out')
+      const tgt = inPortType(conn.target, conn.targetHandle ?? 'in')
+      return src === tgt
+    },
+    [outPortType, inPortType],
   )
 
   const onNodesChange = useCallback(
@@ -95,6 +129,7 @@ export const NodeGraph = () => {
   const onConnect = useCallback(
     (conn: Connection) => {
       if (!conn.source || !conn.target || conn.source === conn.target) return
+      if (!isValidConnection(conn)) return
       const id = `${conn.source}:${conn.sourceHandle ?? 'out'}->${conn.target}:${conn.targetHandle ?? 'in'}`
       addEdge({
         id,
@@ -104,7 +139,7 @@ export const NodeGraph = () => {
         targetPortId: conn.targetHandle ?? 'in',
       })
     },
-    [addEdge],
+    [addEdge, isValidConnection],
   )
 
   const minimapColor = useCallback(
@@ -126,6 +161,7 @@ export const NodeGraph = () => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        isValidConnection={isValidConnection}
         defaultEdgeOptions={{ type: 'audioEdge' }}
         fitView
         proOptions={{ hideAttribution: true }}

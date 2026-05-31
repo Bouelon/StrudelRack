@@ -8,11 +8,13 @@ interface StepGridProps {
   accent: string
   /** Value written when a step is enabled. "0" = note root (default), "1" = drum trigger. */
   onValue?: string
+  /** Force a fixed number of columns (e.g. 16 for a single straight matrix row). */
+  columns?: number
   onChange: (steps: string[]) => void
 }
 
 /** Toggling a step on writes `onValue`; off writes "" (a rest). */
-export const StepGrid = ({ steps, stepCount, accent, onValue = '0', onChange }: StepGridProps) => {
+export const StepGrid = ({ steps, stepCount, accent, onValue = '0', columns, onChange }: StepGridProps) => {
   const isPlaying = useRack((s) => s.isPlaying)
   const bpm = useRack((s) => s.bpm)
   const [playhead, setPlayhead] = useState(-1)
@@ -41,7 +43,7 @@ export const StepGrid = ({ steps, stepCount, accent, onValue = '0', onChange }: 
   return (
     <div
       className="grid gap-1"
-      style={{ gridTemplateColumns: `repeat(${Math.min(stepCount, 8)}, minmax(0, 1fr))`, '--led-accent': accent } as React.CSSProperties}
+      style={{ gridTemplateColumns: `repeat(${columns ?? Math.min(stepCount, 8)}, minmax(0, 1fr))`, '--led-accent': accent } as React.CSSProperties}
     >
       {padded.map((v, i) => {
         const on = v.trim() !== ''

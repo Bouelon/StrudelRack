@@ -1,15 +1,22 @@
 // client/src/engine/compiler.ts
 // The core of the entire app. PURE — zero side effects. 100% unit tested.
 //
-// Two responsibilities:
+// Responsibilities:
 //   1. compile()        — interpolate a single module's {{param}} template → Strudel code
 //   2. compileSession() — assemble instances + edges into one `stack(...).cpm(bpm/4)` program
+//
+// Signal routing (port-type aware):
+//   • audio cable   (audio→audio)   → effect/filter method-chaining, as before
+//   • trigger cable (trigger→trigger) → a SEQUENCER drives a target:
+//        - instrument target → append `.struct("…")` (rhythm) or `.note("…")` (notes)
+//        - MIDI-out sink     → `note("…").midi("device")` (external MIDI; experimental)
+//   Sequencers are NOT audible on their own; they only shape whatever they trigger.
 //
 // Template placeholder syntax:
 //   {{paramId}}                 → formatted param value
 //   {{flag ? aaa : bbb}}        → ternary on a boolean/truthy param; branches are RAW text
 
-import type { ModuleDef, ModuleInstance, ModuleEdge, ParamValue } from '@shared/index'
+import type { ModuleDef, ModuleInstance, ModuleEdge, ParamValue, PortType } from '@shared/index'
 
 const PLACEHOLDER = /\{\{\s*([^}]+?)\s*\}\}/g
 const TERNARY = /^([A-Za-z_$][\w$]*)\s*\?\s*([\s\S]+?)\s*:\s*([\s\S]+)$/
@@ -53,10 +60,9 @@ export function interpolate(template: string, paramValues: Record<string, ParamV
 
 /**
  * Compile a single module definition + values into Strudel code.
- * - sound sources (instrument/sequencer): produce a standalone pattern
+ * - sound sources (instrument): produce a standalone pattern
  * - effects/modifiers: produce a method-chain fragment beginning with `.`
- *   (e.g. `.delay(0.4).delaytime(0.4)`) appended directly onto the source — Strudel
- *   patterns have NO `.pipe()`; effects ARE pattern methods, so chaining is direct.
+ *   (e.g. `.delay(0.4).delaytime(0.4)`) appended directly onto the source.
  * Defaults are filled in from def.params when a value is missing.
  */
 export function compile(def: ModuleDef, paramValues: Record<string, ParamValue>): string {
@@ -72,13 +78,45 @@ function withDefaults(def: ModuleDef, paramValues: Record<string, ParamValue>): 
   return out
 }
 
-const SOURCE_TYPES = new Set(['instrument', 'sequencer'])
+// ── port-type / role helpers ──────────────────────────────────────────────────
+
+/** Type of an output port (defaults to 'audio' when a def declares no ports). */
+function outPortType(def: ModuleDef, portId: string): PortType {
+  return def.ports.outputs.find((p) => p.id === portId)?.type ?? 'audio'
+}
+
+/** A MIDI-out sink: a modifier that consumes a trigger and emits no audio. */
+function isMidiSink(def: ModuleDef): boolean {
+  return (
+    def.type === 'modifier' &&
+    def.ports.inputs.some((p) => p.type === 'trigger') &&
+    !def.ports.outputs.some((p) => p.type === 'audio')
+  )
+}
+
+/** An audio processor that can be chained onto a source (filter, delay, …). */
+function isAudioEffect(def: ModuleDef): boolean {
+  return (def.type === 'effect' || def.type === 'modifier') && !isMidiSink(def)
+}
+
+/** Roots = audible instruments + driven MIDI sinks. Sequencers are never roots. */
+function isRootCandidate(def: ModuleDef): boolean {
+  return def.type === 'instrument' || isMidiSink(def)
+}
+
+/** Which sequencer (and which of its trigger outputs) feeds a target's trigger input. */
+interface TriggerLink {
+  instanceId: string
+  portId: string
+}
 
 interface CompileCtx {
   byId: Map<string, ModuleInstance>
   defs: Map<string, ModuleDef>
-  outgoing: Map<string, ModuleEdge[]>
-  incomingCount: Map<string, number>
+  /** source instance → its outgoing AUDIO edges (effect chaining). */
+  audioOut: Map<string, ModuleEdge[]>
+  /** target instance → the sequencer + output port feeding its trigger input. */
+  triggerSource: Map<string, TriggerLink>
 }
 
 function buildCtx(
@@ -87,47 +125,104 @@ function buildCtx(
   defs: Map<string, ModuleDef>,
 ): CompileCtx {
   const byId = new Map(instances.map((i) => [i.instanceId, i]))
-  const outgoing = new Map<string, ModuleEdge[]>()
-  const incomingCount = new Map<string, number>()
+  const audioOut = new Map<string, ModuleEdge[]>()
+  const triggerSource = new Map<string, TriggerLink>()
   for (const e of edges) {
-    // Only chain edges between known instances
-    if (!byId.has(e.sourceInstanceId) || !byId.has(e.targetInstanceId)) continue
-    if (!outgoing.has(e.sourceInstanceId)) outgoing.set(e.sourceInstanceId, [])
-    outgoing.get(e.sourceInstanceId)!.push(e)
-    incomingCount.set(e.targetInstanceId, (incomingCount.get(e.targetInstanceId) ?? 0) + 1)
+    const src = byId.get(e.sourceInstanceId)
+    const tgt = byId.get(e.targetInstanceId)
+    if (!src || !tgt) continue
+    const sDef = defs.get(src.defId)
+    if (!sDef) continue
+    if (outPortType(sDef, e.sourcePortId) === 'trigger') {
+      // first trigger wins (one sequencer lane per target)
+      if (!triggerSource.has(e.targetInstanceId))
+        triggerSource.set(e.targetInstanceId, { instanceId: e.sourceInstanceId, portId: e.sourcePortId })
+    } else {
+      if (!audioOut.has(e.sourceInstanceId)) audioOut.set(e.sourceInstanceId, [])
+      audioOut.get(e.sourceInstanceId)!.push(e)
+    }
   }
-  return { byId, defs, outgoing, incomingCount }
+  return { byId, defs, audioOut, triggerSource }
 }
 
 /**
- * Build the chain code for a single source instance, following outgoing edges
- * through effects/modifiers as `.pipe(x => <effectBody>)` segments.
- * Linear chain (branches followed in edge order). Cycles are guarded.
+ * The fragment a sequencer contributes when one of its trigger outputs feeds a target.
+ * - `standalone`  → a head pattern for a MIDI sink (`note("…")` / `note("c3").struct("…")`)
+ * - otherwise     → a chain fragment appended onto an instrument (`.note("…")` / `.struct("…")`)
+ *
+ * Lane selection:
+ *  - if the source output port declares a `lane` (multi-lane drum matrix) → that step lane,
+ *    always rhythm (`.struct`);
+ *  - otherwise the mono sequencer's `mode`: rhythm → `pattern`, notes → `noteSeq`/`notePattern`.
+ * Returns null when the source is not an active sequencer.
+ */
+function triggerFragment(link: TriggerLink, ctx: CompileCtx, standalone: boolean): string | null {
+  const seq = ctx.byId.get(link.instanceId)
+  if (!seq) return null
+  const seqDef = ctx.defs.get(seq.defId)
+  if (!seqDef || seqDef.type !== 'sequencer' || !seq.active) return null
+  const m = withDefaults(seqDef, seq.paramValues)
+  const base = formatValue(m.baseNote ?? 'c3')
+
+  // Multi-lane: the trigger output names the step lane it carries.
+  const lane = seqDef.ports.outputs.find((p) => p.id === link.portId)?.lane
+  if (lane) {
+    const pat = formatValue(m[lane] ?? [])
+    return standalone ? `note("${base}").struct("${pat}")` : `.struct("${pat}")`
+  }
+
+  // Mono sequencer: rhythm vs notes.
+  if (String(m.mode ?? 'rhythm') === 'notes') {
+    const notes = formatValue(m.noteSeq ?? m.notePattern ?? '')
+    return standalone ? `note("${notes}")` : `.note("${notes}")`
+  }
+  const pat = formatValue(m.pattern ?? [])
+  return standalone ? `note("${base}").struct("${pat}")` : `.struct("${pat}")`
+}
+
+/**
+ * Build the chain code for one root.
+ *   instrument → its body, optionally trigger-shaped, then audio effects appended.
+ *   MIDI sink  → the driving sequencer's head pattern + the sink's `.midi(...)` body.
+ * Linear audio chain (branches followed in edge order). Cycles are guarded.
  */
 function buildChain(rootId: string, ctx: CompileCtx): string | null {
   const root = ctx.byId.get(rootId)!
-  const rootDef = ctx.defs.get(root.defId)
-  if (!rootDef) return null
-  if (!root.active) return null
+  const def = ctx.defs.get(root.defId)
+  if (!def || !root.active) return null
 
-  let code = compile(rootDef, root.paramValues)
+  // MIDI-out sink: only audible/active when a sequencer drives it.
+  if (isMidiSink(def)) {
+    const link = ctx.triggerSource.get(rootId)
+    if (!link) return null
+    const head = triggerFragment(link, ctx, true)
+    if (head == null) return null
+    return head + compile(def, root.paramValues)
+  }
+
+  // Instrument: own body, optionally re-shaped by a trigger cable.
+  let code = compile(def, root.paramValues)
+  const link = ctx.triggerSource.get(rootId)
+  if (link) {
+    const frag = triggerFragment(link, ctx, false)
+    if (frag) code += frag
+  }
+
+  // Walk outgoing AUDIO edges, appending effect bodies.
   const visited = new Set<string>([rootId])
   let cursor = rootId
-
-  // Walk the chain
   for (;;) {
-    const edges = ctx.outgoing.get(cursor) ?? []
+    const edges = ctx.audioOut.get(cursor) ?? []
     let advanced = false
     for (const edge of edges) {
       const target = ctx.byId.get(edge.targetInstanceId)
       if (!target || visited.has(target.instanceId)) continue
       const tDef = ctx.defs.get(target.defId)
-      if (!tDef || SOURCE_TYPES.has(tDef.type)) continue // sources aren't piped into
+      if (!tDef || !isAudioEffect(tDef)) continue // only filters/effects are piped into
       visited.add(target.instanceId)
       if (target.active) {
         // Effect bodies are method-chain fragments beginning with `.` — append directly.
-        const body = compile(tDef, target.paramValues)
-        code += `\n  ${body}`
+        code += `\n  ${compile(tDef, target.paramValues)}`
       }
       cursor = target.instanceId
       advanced = true
@@ -138,12 +233,12 @@ function buildChain(rootId: string, ctx: CompileCtx): string | null {
   return code
 }
 
-/** Roots = active sound sources (deterministic order by `position`). */
+/** Roots = active sound sources / driven sinks (deterministic order by `position`). */
 function findRoots(instances: ModuleInstance[], defs: Map<string, ModuleDef>): ModuleInstance[] {
   return instances
     .filter((i) => {
       const d = defs.get(i.defId)
-      return d != null && SOURCE_TYPES.has(d.type)
+      return d != null && isRootCandidate(d)
     })
     .sort((a, b) => a.position - b.position)
 }

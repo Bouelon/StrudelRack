@@ -5,6 +5,8 @@ import { WaKnob } from '../controls/WaKnob'
 import { WaSlider } from '../controls/WaSlider'
 import { WaSwitch } from '../controls/WaSwitch'
 import { StepGrid } from './StepGrid'
+import { NoteStepGrid } from './NoteStepGrid'
+import { MidiDeviceSelect } from '../controls/MidiDeviceSelect'
 import { knobColors, sliderColors, skinFor } from '../controls/skins'
 
 interface ParamControlProps {
@@ -109,9 +111,30 @@ export const ParamControl = ({ def, param, value, diameter, onChange }: ParamCon
             stepCount={param.stepCount ?? 16}
             accent={accent}
             onValue={param.onValue}
+            columns={param.gridColumns}
             onChange={(s) => onChange(s)}
           />
         </div>
+      )
+    case 'noteSteps':
+      return (
+        <div className="flex flex-col gap-1 w-full">
+          <span className="engraved text-[9px] uppercase tracking-[0.15em] text-[var(--color-text-dim)]">
+            {param.label}
+          </span>
+          <NoteStepGrid
+            steps={Array.isArray(value) ? value : []}
+            stepCount={param.stepCount ?? 16}
+            accent={accent}
+            noteOptions={param.noteOptions ?? []}
+            columns={param.gridColumns}
+            onChange={(s) => onChange(s)}
+          />
+        </div>
+      )
+    case 'midiDevice':
+      return (
+        <MidiDeviceSelect value={String(value ?? '')} label={param.label} onChange={(v) => onChange(v)} />
       )
     default:
       return null

@@ -240,3 +240,156 @@ describe('compileChains / compileSession', () => {
     expect(compileSession([], [], defs, 120)).toBe('silence')
   })
 })
+
+// ── trigger cables: sequencer → instrument / MIDI sink ─────────────────────────
+describe('trigger routing', () => {
+  // A trigger source: declares a 'trigger' output so the compiler routes it as a cable.
+  const seq = def({
+    id: 'seq',
+    type: 'sequencer',
+    strudelCode: 'struct("{{pattern}}")',
+    params: [
+      { id: 'mode', label: 'Mode', type: 'select', options: ['rhythm', 'notes'], default: 'rhythm' },
+      { id: 'pattern', label: 'Pattern', type: 'steps', stepCount: 8, onValue: '1', default: ['1', '', '1', '', '1', '', '1', ''] },
+      { id: 'notePattern', label: 'Notes', type: 'code', default: 'c2 ~ e2 ~' },
+      { id: 'baseNote', label: 'Note', type: 'code', default: 'c3' },
+    ],
+    ports: { inputs: [], outputs: [{ id: 'trig', label: 'Trig', type: 'trigger' }] },
+  })
+  // An instrument with a trigger input + audio output.
+  const voice = def({
+    id: 'voice',
+    type: 'instrument',
+    strudelCode: 's("bd").gain({{gain}})',
+    params: [{ id: 'gain', label: 'Gain', type: 'knob', default: 1 }],
+    ports: {
+      inputs: [{ id: 'trig', label: 'Trig', type: 'trigger' }],
+      outputs: [{ id: 'out', label: 'Out', type: 'audio' }],
+    },
+  })
+  const lpf = def({
+    id: 'lpf',
+    type: 'effect',
+    strudelCode: '.cutoff({{c}})',
+    params: [{ id: 'c', label: 'C', type: 'knob', default: 800 }],
+    ports: {
+      inputs: [{ id: 'in', label: 'In', type: 'audio' }],
+      outputs: [{ id: 'out', label: 'Out', type: 'audio' }],
+    },
+  })
+  const midiOut = def({
+    id: 'midiout',
+    type: 'modifier',
+    strudelCode: '.midi("{{device}}")',
+    params: [{ id: 'device', label: 'Device', type: 'code', default: 'IAC Driver' }],
+    ports: { inputs: [{ id: 'in', label: 'In', type: 'trigger' }], outputs: [] },
+  })
+  const defs = new Map([seq, voice, lpf, midiOut].map((d) => [d.id, d]))
+
+  const trig = (source: string, target: string): ModuleEdge => ({
+    id: `${source}->${target}`,
+    sourceInstanceId: source,
+    sourcePortId: 'trig',
+    targetInstanceId: target,
+    targetPortId: 'trig',
+  })
+
+  test('sequencer is never an audible root on its own', () => {
+    const chains = compileChains([inst({ instanceId: 's', defId: 'seq' })], [], defs)
+    expect(chains).toEqual([])
+  })
+
+  test('rhythm mode appends .struct() to the instrument it triggers', () => {
+    const instances = [
+      inst({ instanceId: 's', defId: 'seq', paramValues: { mode: 'rhythm', pattern: ['1', '', '1', ''] } }),
+      inst({ instanceId: 'v', defId: 'voice', paramValues: { gain: 0.9 } }),
+    ]
+    const chains = compileChains(instances, [trig('s', 'v')], defs)
+    expect(chains).toEqual(['s("bd").gain(0.9).struct("1 ~ 1 ~")'])
+  })
+
+  test('notes mode appends .note() to the instrument it triggers', () => {
+    const instances = [
+      inst({ instanceId: 's', defId: 'seq', paramValues: { mode: 'notes', notePattern: 'c2 ~ e2 g2' } }),
+      inst({ instanceId: 'v', defId: 'voice', paramValues: { gain: 1 } }),
+    ]
+    const chains = compileChains(instances, [trig('s', 'v')], defs)
+    expect(chains).toEqual(['s("bd").gain(1).note("c2 ~ e2 g2")'])
+  })
+
+  test('trigger + audio chain combine: seq → voice → filter', () => {
+    const instances = [
+      inst({ instanceId: 's', defId: 'seq', paramValues: { mode: 'rhythm', pattern: ['1', '', '', ''] } }),
+      inst({ instanceId: 'v', defId: 'voice', paramValues: { gain: 1 } }),
+      inst({ instanceId: 'f', defId: 'lpf', paramValues: { c: 500 } }),
+    ]
+    const chains = compileChains(instances, [trig('s', 'v'), edge('v', 'f')], defs)
+    expect(chains).toEqual(['s("bd").gain(1).struct("1 ~ ~ ~")\n  .cutoff(500)'])
+  })
+
+  test('inactive sequencer leaves the instrument playing standalone', () => {
+    const instances = [
+      inst({ instanceId: 's', defId: 'seq', active: false, paramValues: { mode: 'rhythm', pattern: ['1', '', '', ''] } }),
+      inst({ instanceId: 'v', defId: 'voice', paramValues: { gain: 1 } }),
+    ]
+    const chains = compileChains(instances, [trig('s', 'v')], defs)
+    expect(chains).toEqual(['s("bd").gain(1)'])
+  })
+
+  test('MIDI sink: driven sequencer becomes note(...).midi(device)', () => {
+    const instances = [
+      inst({ instanceId: 's', defId: 'seq', paramValues: { mode: 'notes', notePattern: 'c2 e2 g2' } }),
+      inst({ instanceId: 'm', defId: 'midiout', paramValues: { device: 'IAC Driver' } }),
+    ]
+    const chains = compileChains(instances, [trig('s', 'm')], defs)
+    expect(chains).toEqual(['note("c2 e2 g2").midi("IAC Driver")'])
+  })
+
+  test('MIDI sink with rhythm mode uses baseNote + struct', () => {
+    const instances = [
+      inst({ instanceId: 's', defId: 'seq', paramValues: { mode: 'rhythm', baseNote: 'c3', pattern: ['1', '', '1', ''] } }),
+      inst({ instanceId: 'm', defId: 'midiout', paramValues: { device: 'Synth' } }),
+    ]
+    const chains = compileChains(instances, [trig('s', 'm')], defs)
+    expect(chains).toEqual(['note("c3").struct("1 ~ 1 ~").midi("Synth")'])
+  })
+
+  test('undriven MIDI sink emits nothing', () => {
+    const chains = compileChains([inst({ instanceId: 'm', defId: 'midiout' })], [], defs)
+    expect(chains).toEqual([])
+  })
+
+  test('multi-lane matrix: each trigger output carries its own lane', () => {
+    const matrix = def({
+      id: 'matrix',
+      type: 'sequencer',
+      strudelCode: 'struct("{{lane1}}")',
+      params: [
+        { id: 'lane1', label: 'L1', type: 'steps', stepCount: 4, onValue: '1', default: ['1', '', '', ''] },
+        { id: 'lane2', label: 'L2', type: 'steps', stepCount: 4, onValue: '1', default: ['', '', '1', ''] },
+      ],
+      ports: {
+        inputs: [],
+        outputs: [
+          { id: 'trig1', label: '1', type: 'trigger', lane: 'lane1' },
+          { id: 'trig2', label: '2', type: 'trigger', lane: 'lane2' },
+        ],
+      },
+    })
+    const mdefs = new Map([...defs, [matrix.id, matrix]])
+    const instances = [
+      inst({ instanceId: 'mx', defId: 'matrix', position: 0, paramValues: { lane1: ['1', '', '1', ''], lane2: ['', '1', '', '1'] } }),
+      inst({ instanceId: 'bd', defId: 'voice', position: 1, paramValues: { gain: 1 } }),
+      inst({ instanceId: 'sd', defId: 'voice', position: 2, paramValues: { gain: 1 } }),
+    ]
+    const edges: ModuleEdge[] = [
+      { id: 'e1', sourceInstanceId: 'mx', sourcePortId: 'trig1', targetInstanceId: 'bd', targetPortId: 'trig' },
+      { id: 'e2', sourceInstanceId: 'mx', sourcePortId: 'trig2', targetInstanceId: 'sd', targetPortId: 'trig' },
+    ]
+    const chains = compileChains(instances, edges, mdefs)
+    expect(chains).toEqual([
+      's("bd").gain(1).struct("1 ~ 1 ~")',
+      's("bd").gain(1).struct("~ 1 ~ 1")',
+    ])
+  })
+})

@@ -1,0 +1,46 @@
+{
+  "id": "trigger-seq",
+  "name": "Trigger Seq 16",
+  "author": "strudelrack",
+  "version": "1.1.0",
+  "type": "sequencer",
+  "tags": ["sequencer", "trigger", "midi", "16-step", "gate", "melodic"],
+  "description": "Mono 16-step trigger sequencer. Patch its Trig output into an instrument (or MIDI Out). Rhythm mode gates the instrument (.struct); Notes mode drives its pitch per step (.note).",
+  "strudelCode": "struct(\"{{pattern}}\")",
+  "params": [
+    { "id": "mode", "label": "Mode", "type": "select", "options": ["rhythm", "notes"], "default": "rhythm" },
+    {
+      "id": "pattern",
+      "label": "Steps (rhythm)",
+      "type": "steps",
+      "stepCount": 16,
+      "gridColumns": 16,
+      "onValue": "1",
+      "default": ["1", "", "", "", "1", "", "", "", "1", "", "", "", "1", "", "", ""]
+    },
+    {
+      "id": "noteSeq",
+      "label": "Notes (per step)",
+      "type": "noteSteps",
+      "stepCount": 16,
+      "gridColumns": 8,
+      "noteOptions": ["c2", "d2", "eb2", "e2", "f2", "g2", "a2", "bb2", "b2", "c3", "d3", "eb3", "e3", "f3", "g3", "a3", "bb3", "b3", "c4", "e4", "g4"],
+      "default": ["c2", "", "eb2", "", "g2", "", "eb2", "", "c2", "", "g2", "", "bb2", "", "g2", ""]
+    },
+    { "id": "baseNote", "label": "Base Note", "type": "code", "default": "c3" }
+  ],
+  "visual": {
+    "panelColor": "#160d04",
+    "accentColor": "#ffa733",
+    "knobStyle": "aluminum",
+    "panelTexture": "brushed-metal",
+    "hasOscilloscope": false,
+    "hasVuMeter": false,
+    "panelWidthHP": 16
+  },
+  "ports": {
+    "inputs": [],
+    "outputs": [{ "id": "trig", "label": "Trig", "type": "trigger" }]
+  },
+  "createdAt": "2026-05-31T00:00:00Z"
+}

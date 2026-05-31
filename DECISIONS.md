@@ -97,6 +97,37 @@ Non-obvious decisions taken while building StrudelRack. Newest first.
 - **Room codes** like `TRM-4F9` (`shared/collab.ts`, ambiguity-free alphabet). `LOCAL` = solo.
   Dev: Vite proxies `/ws` → `:3001`. Verified with a two-client relay smoke test.
 
+## Trigger / MIDI cables (sequencer-as-controller)
+- **Two cable kinds, by port type.** Edges are routed on the *source output port's* `type`
+  (`compiler.ts` `buildCtx`): `trigger` ports become control cables, everything else is an
+  audio chain. The node view colours them (audio = panel accent, trigger = amber dashed in
+  `TriggerEdge.tsx`) and `isValidConnection` blocks cross-type patching (audio↔trigger).
+  Ports with no declared type default to `audio`, so pre-existing modules/edges are unaffected.
+- **Sequencers are controllers, not sound.** A `sequencer` is no longer a root — it emits no
+  audio alone. It *shapes whatever it triggers*: into an **instrument** it appends
+  `.struct("…")` (rhythm mode) or `.note("…")` (notes mode, last `.note()` wins → drives pitch);
+  into a **MIDI-out sink** it becomes the head pattern `note("…")[.struct]`. One trigger source
+  per target (first edge wins). An inactive sequencer falls back to the instrument playing solo.
+- **A "MIDI sink" is detected structurally**, not by tag: a `modifier` with a `trigger` input
+  and no `audio` output (`isMidiSink`). It only emits when driven, compiling to
+  `note("…").midi("device")`. **Web MIDI output is untested here** — `midi-out.json` is marked
+  experimental; it needs a real browser MIDI device + permission.
+- **Build a drum kit from cables**, not one mega-module: `sampler-voice` is a single triggered
+  voice (selectable sample); stack several driven by their own `Trigger Seq 16`. This replaced
+  the earlier self-contained `drum-kit-sequencer` (removed).
+- **Multi-lane matrix = one trigger output per lane.** `drum-matrix` (16×8 beatbox) declares 8
+  step lanes and 8 `trigger` outputs; each output carries `lane: <paramId>` so the compiler
+  resolves which lane a cable carries from the *source port id* (`triggerSource` stores the port,
+  not just the instance). Patch each lane into its own voice → per-voice filtering. The matrix is
+  itself silent (a pure controller); its `strudelCode` is only a cosmetic per-instance preview.
+- **Per-step note editor** (`noteSteps` param + `NoteStepGrid`): stores a `string[]` of pitches
+  (reusing the steps/mini-notation shape, `["c2","","e2"] → note("c2 ~ e2")`), so notes mode
+  needs no new compiler grammar — it reads `noteSeq` (falls back to a `notePattern` text field).
+- **MIDI device picker** (`midiDevice` param + `MidiDeviceSelect`): enumerates real outputs via
+  `navigator.requestMIDIAccess()`, degrades to a free-text field when Web MIDI is absent/denied.
+- **Cable validation**: `isValidConnection` + per-port-type handle colours (trigger = amber square,
+  audio = accent round) keep audio and trigger patches from crossing.
+
 ## Open / deferred
 - Phase 3: Bun/Hono WebSocket server, rooms by code, shared BPM clock, Yjs awareness.
 - Phase 4: SQLite registry + "Package as Module" upload + versioning (client currently bundles

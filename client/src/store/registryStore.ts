@@ -10,10 +10,17 @@ import euclideanKick from '../../../modules/instruments/euclidean-kick.json'
 import drumMachineKick from '../../../modules/instruments/drum-machine-kick.json'
 import acidBass from '../../../modules/instruments/acid-bass.json'
 import fmPad from '../../../modules/instruments/fm-pad.json'
+import samplerVoice from '../../../modules/instruments/sampler-voice.json'
+import triggerSeq from '../../../modules/sequencers/trigger-seq.json'
+import drumMatrix from '../../../modules/sequencers/drum-matrix.json'
 import tapeDelay from '../../../modules/effects/tape-delay.json'
 import lofiFilter from '../../../modules/effects/lo-fi-filter.json'
+import midiOut from '../../../modules/modifiers/midi-out.json'
 
 const SEED: ModuleDef[] = [
+  drumMatrix as ModuleDef,
+  triggerSeq as ModuleDef,
+  samplerVoice as ModuleDef,
   kickDesigner as ModuleDef,
   drumMachineKick as ModuleDef,
   euclideanKick as ModuleDef,
@@ -21,6 +28,7 @@ const SEED: ModuleDef[] = [
   fmPad as ModuleDef,
   tapeDelay as ModuleDef,
   lofiFilter as ModuleDef,
+  midiOut as ModuleDef,
 ]
 
 interface RegistryStore {

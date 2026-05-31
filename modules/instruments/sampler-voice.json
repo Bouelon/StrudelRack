@@ -1,0 +1,30 @@
+{
+  "id": "sampler-voice",
+  "name": "Sampler Voice",
+  "author": "strudelrack",
+  "version": "1.0.0",
+  "type": "instrument",
+  "tags": ["sampler", "drums", "voice", "trigger", "one-shot"],
+  "description": "Single drum/sample voice meant to be triggered. Patch a Trigger Seq into its Trig input; stack several (kick, snare, hat…) to build a drum kit from cables. Plays one hit per cycle when left unpatched.",
+  "strudelCode": "s(\"{{sample}}\").speed({{tune}}).shape({{drive}}).gain({{gain}}).room({{room}})",
+  "params": [
+    { "id": "sample", "label": "Sample", "type": "select", "options": ["bd", "sd", "hh", "oh", "cp", "rim", "lt", "mt", "ht", "cb", "cr"], "default": "bd", "showInNodeView": true },
+    { "id": "tune", "label": "Tune", "type": "knob", "min": 0.5, "max": 2, "default": 1, "showInNodeView": true },
+    { "id": "drive", "label": "Drive", "type": "knob", "min": 0, "max": 0.8, "default": 0.1 },
+    { "id": "gain", "label": "Gain", "type": "knob", "min": 0, "max": 1.5, "default": 1.0, "showInNodeView": true },
+    { "id": "room", "label": "Room", "type": "knob", "min": 0, "max": 1, "default": 0.08 }
+  ],
+  "visual": {
+    "panelColor": "#101418",
+    "accentColor": "#39c5ff",
+    "knobStyle": "black-vintage",
+    "panelTexture": "brushed-metal",
+    "hasVuMeter": true,
+    "panelWidthHP": 8
+  },
+  "ports": {
+    "inputs": [{ "id": "trig", "label": "Trig", "type": "trigger" }],
+    "outputs": [{ "id": "out", "label": "Out", "type": "audio" }]
+  },
+  "createdAt": "2026-05-31T00:00:00Z"
+}

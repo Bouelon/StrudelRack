@@ -1,6 +1,7 @@
 // client/src/components/NodeGraph/ModuleNode.tsx
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { CSSProperties } from 'react'
+import type { PortType } from '@shared/index'
 import { useRack } from '../../store/rackStore'
 import { useRegistry } from '../../store/registryStore'
 import { ParamControl } from '../Rack/ParamControl'
@@ -12,6 +13,13 @@ export interface ModuleNodeData {
 
 const HP_PX = 12
 
+/** Trigger/MIDI ports stand out in amber; CV cyan; audio inherits the panel accent. */
+function portColor(type: PortType, accent: string): string {
+  if (type === 'trigger') return '#ffa733'
+  if (type === 'cv') return '#7cff9b'
+  return accent
+}
+
 export const ModuleNode = ({ data, selected }: NodeProps) => {
   const { instanceId } = data as ModuleNodeData
   const instance = useRack((s) => s.instances.find((i) => i.instanceId === instanceId))
@@ -21,13 +29,16 @@ export const ModuleNode = ({ data, selected }: NodeProps) => {
 
   if (!instance || !def) return null
   const accent = def.visual.accentColor
-  const width = Math.max(def.visual.panelWidthHP * HP_PX, 120)
+  const width = Math.min(Math.max(def.visual.panelWidthHP * HP_PX, 120), 220)
   const nodeParams = def.params.filter((p) => p.showInNodeView)
+  // Reserve vertical room so every input/output handle sits on the card.
+  const maxPorts = Math.max(def.ports.inputs.length, def.ports.outputs.length)
+  const minHeight = Math.max(70, 34 + maxPorts * 20 + 8)
 
   return (
     <div
       className={`module-node ${selected ? 'selected' : ''}`}
-      style={{ borderTopColor: accent, width, color: accent, ['--node-accent' as string]: accent } as CSSProperties}
+      style={{ borderTopColor: accent, width, minHeight, color: accent, ['--node-accent' as string]: accent } as CSSProperties}
     >
       {def.ports.inputs.map((port, i) => (
         <Handle
@@ -35,8 +46,17 @@ export const ModuleNode = ({ data, selected }: NodeProps) => {
           type="target"
           position={Position.Left}
           id={port.id}
-          style={{ top: 34 + i * 20, background: accent, width: 9, height: 9 }}
-        />
+          title={`${port.label} (${port.type})`}
+          style={{
+            top: 34 + i * 20,
+            background: portColor(port.type, accent),
+            width: 9,
+            height: 9,
+            borderRadius: port.type === 'trigger' ? 2 : 9,
+          }}
+        >
+          <span className="port-label port-label-in">{port.label}</span>
+        </Handle>
       ))}
 
       <div className="node-header" style={{ color: accent }}>
@@ -78,8 +98,17 @@ export const ModuleNode = ({ data, selected }: NodeProps) => {
           type="source"
           position={Position.Right}
           id={port.id}
-          style={{ top: 34 + i * 20, background: accent, width: 9, height: 9 }}
-        />
+          title={`${port.label} (${port.type})`}
+          style={{
+            top: 34 + i * 20,
+            background: portColor(port.type, accent),
+            width: 9,
+            height: 9,
+            borderRadius: port.type === 'trigger' ? 2 : 9,
+          }}
+        >
+          <span className="port-label port-label-out">{port.label}</span>
+        </Handle>
       ))}
     </div>
   )

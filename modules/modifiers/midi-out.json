@@ -1,0 +1,25 @@
+{
+  "id": "midi-out",
+  "name": "MIDI Out",
+  "author": "strudelrack",
+  "version": "0.1.0",
+  "type": "modifier",
+  "tags": ["midi", "midi-out", "trigger", "external", "experimental"],
+  "description": "Sends the patched sequencer to an external MIDI device via Web MIDI (Strudel .midi). EXPERIMENTAL: requires a browser MIDI permission and a real output device named below. Notes mode = pitches; rhythm mode = base note gated by the pattern.",
+  "strudelCode": ".midi(\"{{device}}\")",
+  "params": [
+    { "id": "device", "label": "MIDI Device", "type": "midiDevice", "default": "IAC Driver" }
+  ],
+  "visual": {
+    "panelColor": "#0a0a12",
+    "accentColor": "#ff5fa2",
+    "knobStyle": "aluminum",
+    "panelTexture": "anodized",
+    "panelWidthHP": 6
+  },
+  "ports": {
+    "inputs": [{ "id": "in", "label": "Trig", "type": "trigger" }],
+    "outputs": []
+  },
+  "createdAt": "2026-05-31T00:00:00Z"
+}

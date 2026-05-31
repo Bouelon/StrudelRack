@@ -26,7 +26,15 @@ export interface ModuleVisual {
 // ── Module definition ────────────────────────────────────────────────────────
 export type ModuleType = 'instrument' | 'effect' | 'sequencer' | 'modifier'
 
-export type ParamType = 'knob' | 'slider' | 'steps' | 'select' | 'toggle' | 'code'
+export type ParamType =
+  | 'knob'
+  | 'slider'
+  | 'steps'
+  | 'noteSteps'
+  | 'select'
+  | 'toggle'
+  | 'code'
+  | 'midiDevice'
 
 export type ParamValue = number | string | boolean | string[]
 
@@ -41,6 +49,10 @@ export interface ModuleParam {
   default: ParamValue
   options?: string[] // for 'select'
   stepCount?: number // for 'steps' (e.g. 16)
+  /** Force the step grid to a fixed number of columns (e.g. 16 for one straight matrix row). */
+  gridColumns?: number
+  /** Note options offered per step in a 'noteSteps' grid (mini-notation pitches). */
+  noteOptions?: string[]
   /** Value written when a step is toggled on. Default "0" (note root); use "1" for drum struct. */
   onValue?: string
   unit?: string // "Hz", "ms", "%"
@@ -57,6 +69,8 @@ export interface ModulePort {
   id: string
   label: string
   type: PortType
+  /** For a multi-lane sequencer: the param id (a step lane) this trigger output carries. */
+  lane?: string
 }
 
 export interface ModuleDef {

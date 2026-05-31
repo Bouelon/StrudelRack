@@ -1,0 +1,43 @@
+{
+  "id": "drum-matrix",
+  "name": "Drum Matrix 16×8",
+  "author": "strudelrack",
+  "version": "1.0.0",
+  "type": "sequencer",
+  "tags": ["drum-machine", "sequencer", "trigger", "matrix", "beatbox", "16-step", "808"],
+  "description": "8-lane × 16-step drum machine. Each lane has its own Trig output — patch each into an instrument (e.g. Sampler Voice) to build a kit you can filter per voice. Pure trigger source: makes no sound until patched.",
+  "strudelCode": "stack(struct(\"{{kick}}\"),struct(\"{{snare}}\"),struct(\"{{hat}}\"),struct(\"{{ohat}}\"),struct(\"{{clap}}\"),struct(\"{{rim}}\"),struct(\"{{tom}}\"),struct(\"{{perc}}\"))",
+  "params": [
+    { "id": "kick", "label": "1 · Kick", "type": "steps", "stepCount": 16, "gridColumns": 16, "onValue": "1", "default": ["1", "", "", "", "1", "", "", "", "1", "", "", "", "1", "", "", ""] },
+    { "id": "snare", "label": "2 · Snare", "type": "steps", "stepCount": 16, "gridColumns": 16, "onValue": "1", "default": ["", "", "", "", "1", "", "", "", "", "", "", "", "1", "", "", ""] },
+    { "id": "hat", "label": "3 · Hi-Hat", "type": "steps", "stepCount": 16, "gridColumns": 16, "onValue": "1", "default": ["1", "", "1", "", "1", "", "1", "", "1", "", "1", "", "1", "", "1", ""] },
+    { "id": "ohat", "label": "4 · Open Hat", "type": "steps", "stepCount": 16, "gridColumns": 16, "onValue": "1", "default": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "1", ""] },
+    { "id": "clap", "label": "5 · Clap", "type": "steps", "stepCount": 16, "gridColumns": 16, "onValue": "1", "default": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""] },
+    { "id": "rim", "label": "6 · Rim", "type": "steps", "stepCount": 16, "gridColumns": 16, "onValue": "1", "default": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""] },
+    { "id": "tom", "label": "7 · Tom", "type": "steps", "stepCount": 16, "gridColumns": 16, "onValue": "1", "default": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""] },
+    { "id": "perc", "label": "8 · Perc", "type": "steps", "stepCount": 16, "gridColumns": 16, "onValue": "1", "default": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""] }
+  ],
+  "visual": {
+    "panelColor": "#0e0a14",
+    "accentColor": "#b56cff",
+    "knobStyle": "black-vintage",
+    "panelTexture": "brushed-metal",
+    "hasOscilloscope": false,
+    "hasVuMeter": false,
+    "panelWidthHP": 26
+  },
+  "ports": {
+    "inputs": [],
+    "outputs": [
+      { "id": "trig1", "label": "1 Kick", "type": "trigger", "lane": "kick" },
+      { "id": "trig2", "label": "2 Snare", "type": "trigger", "lane": "snare" },
+      { "id": "trig3", "label": "3 Hat", "type": "trigger", "lane": "hat" },
+      { "id": "trig4", "label": "4 OHat", "type": "trigger", "lane": "ohat" },
+      { "id": "trig5", "label": "5 Clap", "type": "trigger", "lane": "clap" },
+      { "id": "trig6", "label": "6 Rim", "type": "trigger", "lane": "rim" },
+      { "id": "trig7", "label": "7 Tom", "type": "trigger", "lane": "tom" },
+      { "id": "trig8", "label": "8 Perc", "type": "trigger", "lane": "perc" }
+    ]
+  },
+  "createdAt": "2026-05-31T00:00:00Z"
+}

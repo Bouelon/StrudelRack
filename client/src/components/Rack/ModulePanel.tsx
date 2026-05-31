@@ -20,8 +20,9 @@ export const ModulePanel = ({ instanceId }: { instanceId: string }) => {
   const accent = def.visual.accentColor
   const textureClass = def.visual.panelTexture ? `panel-texture-${def.visual.panelTexture}` : ''
 
-  const fullWidthParams = def.params.filter((p) => p.type === 'steps' || p.type === 'code')
-  const compactParams = def.params.filter((p) => p.type !== 'steps' && p.type !== 'code')
+  const fullWidth = (t: string) => t === 'steps' || t === 'noteSteps' || t === 'code' || t === 'midiDevice'
+  const fullWidthParams = def.params.filter((p) => fullWidth(p.type))
+  const compactParams = def.params.filter((p) => !fullWidth(p.type))
 
   return (
     <div
