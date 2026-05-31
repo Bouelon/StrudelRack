@@ -18,8 +18,9 @@
 
 import type { ModuleDef, ModuleInstance, ModuleEdge, ParamValue, PortType } from '@shared/index'
 
-const PLACEHOLDER = /\{\{\s*([^}]+?)\s*\}\}/g
-const TERNARY = /^([A-Za-z_$][\w$]*)\s*\?\s*([\s\S]+?)\s*:\s*([\s\S]+)$/
+// A ternary head: `flag ?` — the branches (which may themselves contain {{…}}) are
+// split out by a brace-aware scan in matchTernary(), not by this regex.
+const TERNARY_HEAD = /^\s*([A-Za-z_$][\w$]*)\s*\?([\s\S]*)$/
 
 /** Format a single param value into a Strudel-literal fragment. */
 export function formatValue(value: ParamValue): string {
@@ -35,12 +36,63 @@ export function formatValue(value: ParamValue): string {
   return String(value)
 }
 
-/** Resolve one placeholder expression against param values. */
-function resolvePlaceholder(expr: string, paramValues: Record<string, ParamValue>): string {
-  const tern = expr.match(TERNARY)
+function truthy(v: ParamValue | undefined): boolean {
+  if (Array.isArray(v)) return v.length > 0
+  return Boolean(v)
+}
+
+/** Find the `}}` that closes the `{{` opened at `from-2`, honouring nesting. -1 if none. */
+function findClose(s: string, from: number): number {
+  let depth = 1
+  let i = from
+  while (i < s.length - 1) {
+    if (s[i] === '{' && s[i + 1] === '{') {
+      depth++
+      i += 2
+    } else if (s[i] === '}' && s[i + 1] === '}') {
+      depth--
+      if (depth === 0) return i
+      i += 2
+    } else {
+      i++
+    }
+  }
+  return -1
+}
+
+interface Ternary {
+  flag: string
+  whenTrue: string
+  whenFalse: string
+}
+
+/** Parse `flag ? A : B`, where A/B may contain nested {{…}}. Splits on the depth-0 `:`. */
+function matchTernary(expr: string): Ternary | null {
+  const head = expr.match(TERNARY_HEAD)
+  if (!head) return null
+  const flag = head[1]
+  const rest = head[2]
+  let depth = 0
+  for (let i = 0; i < rest.length; i++) {
+    if (rest[i] === '{' && rest[i + 1] === '{') {
+      depth++
+      i++
+    } else if (rest[i] === '}' && rest[i + 1] === '}') {
+      depth--
+      i++
+    } else if (rest[i] === ':' && depth === 0) {
+      return { flag, whenTrue: rest.slice(0, i).trim(), whenFalse: rest.slice(i + 1).trim() }
+    }
+  }
+  return null
+}
+
+/** Resolve one placeholder expression (chosen ternary branches are re-interpolated). */
+function resolveExpr(expr: string, paramValues: Record<string, ParamValue>): string {
+  const tern = matchTernary(expr)
   if (tern) {
-    const [, flag, whenTrue, whenFalse] = tern
-    return truthy(paramValues[flag]) ? whenTrue : whenFalse
+    const branch = truthy(paramValues[tern.flag]) ? tern.whenTrue : tern.whenFalse
+    return interpolate(branch, paramValues) // recurse so nested {{param}} resolve
   }
   const key = expr.trim()
   if (key in paramValues) return formatValue(paramValues[key])
@@ -48,14 +100,26 @@ function resolvePlaceholder(expr: string, paramValues: Record<string, ParamValue
   return `/*?${key}*/`
 }
 
-function truthy(v: ParamValue | undefined): boolean {
-  if (Array.isArray(v)) return v.length > 0
-  return Boolean(v)
-}
-
-/** Interpolate a template string with the given param values. */
+/** Interpolate a template string with the given param values (supports nested {{…}}). */
 export function interpolate(template: string, paramValues: Record<string, ParamValue>): string {
-  return template.replace(PLACEHOLDER, (_m, expr: string) => resolvePlaceholder(expr, paramValues))
+  let out = ''
+  let i = 0
+  for (;;) {
+    const open = template.indexOf('{{', i)
+    if (open === -1) {
+      out += template.slice(i)
+      return out
+    }
+    out += template.slice(i, open)
+    const close = findClose(template, open + 2)
+    if (close === -1) {
+      // Unbalanced — emit the rest verbatim rather than corrupting it.
+      out += template.slice(open)
+      return out
+    }
+    out += resolveExpr(template.slice(open + 2, close), paramValues)
+    i = close + 2
+  }
 }
 
 /**

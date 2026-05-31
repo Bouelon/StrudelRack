@@ -6,8 +6,9 @@
   "type": "instrument",
   "tags": ["kick", "drums", "synth", "sub", "808", "design"],
   "description": "Fully synthesized kick à la Kick 2 / SubLab: pitch envelope (punch), ADSR body, drive and tone. No samples — built from a sub oscillator.",
-  "strudelCode": "note(\"{{tune}}\").s(\"{{wave}}\").struct(\"{{pattern}}\").penv({{punch}}).pdecay({{pitchTime}}).pcurve(1).attack({{attack}}).decay({{decay}}).sustain({{sustain}}).release({{release}}).distort({{drive}}).lpf({{tone}}).gain({{gain}}).room({{room}})",
+  "strudelCode": "note(\"{{tune}}\").s(\"{{wave}}\"){{extTrig ? : .struct(\"{{pattern}}\")}}.penv({{punch}}).pdecay({{pitchTime}}).pcurve(1).attack({{attack}}).decay({{decay}}).sustain({{sustain}}).release({{release}}).distort({{drive}}).lpf({{tone}}).gain({{gain}}).room({{room}})",
   "params": [
+    { "id": "extTrig", "label": "Ext Trig", "type": "toggle", "default": false },
     {
       "id": "pattern",
       "label": "Pattern",

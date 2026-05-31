@@ -78,6 +78,18 @@ describe('interpolate', () => {
   test('unknown placeholder leaves a marker, not broken syntax', () => {
     expect(interpolate('x({{nope}})', {})).toBe('x(/*?nope*/)')
   })
+  test('ternary branch may contain a nested placeholder', () => {
+    const tpl = 's("bd"){{ext ? : .struct("{{pattern}}")}}.gain(1)'
+    expect(interpolate(tpl, { ext: false, pattern: ['1', '', '1', ''] })).toBe(
+      's("bd").struct("1 ~ 1 ~").gain(1)',
+    )
+    expect(interpolate(tpl, { ext: true, pattern: ['1', '', '1', ''] })).toBe('s("bd").gain(1)')
+  })
+  test('nested placeholder with multiple args resolves', () => {
+    const tpl = 's("bd"){{ext ? : .euclid({{pulses}},{{steps}})}}'
+    expect(interpolate(tpl, { ext: false, pulses: 3, steps: 8 })).toBe('s("bd").euclid(3,8)')
+    expect(interpolate(tpl, { ext: true, pulses: 3, steps: 8 })).toBe('s("bd")')
+  })
 })
 
 // ── compile (single module, with defaults) ─────────────────────────────────────

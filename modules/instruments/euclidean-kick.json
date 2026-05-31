@@ -6,8 +6,9 @@
   "type": "instrument",
   "tags": ["kick", "drums", "percussive", "euclidean"],
   "description": "Euclidean rhythm kick drum. Distributes pulses evenly across steps.",
-  "strudelCode": "s(\"bd\").euclid({{pulses}},{{steps}}).gain({{gain}}).decay({{decay}}).room({{room}})",
+  "strudelCode": "s(\"bd\"){{extTrig ? : .euclid({{pulses}},{{steps}})}}.gain({{gain}}).decay({{decay}}).room({{room}})",
   "params": [
+    { "id": "extTrig", "label": "Ext Trig", "type": "toggle", "default": false },
     { "id": "pulses", "label": "Pulses", "type": "knob", "min": 1, "max": 16, "step": 1, "default": 3, "showInNodeView": true },
     { "id": "steps", "label": "Steps", "type": "knob", "min": 1, "max": 16, "step": 1, "default": 8, "showInNodeView": true },
     { "id": "gain", "label": "Gain", "type": "knob", "min": 0, "max": 1.5, "default": 0.9, "showInNodeView": true },

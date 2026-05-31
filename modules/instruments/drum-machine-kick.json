@@ -6,9 +6,10 @@
   "type": "instrument",
   "tags": ["kick", "drums", "808", "909", "analog", "drum-machine"],
   "description": "Classic TR-808/909 bass drum sample with tune, drive and a programmable 16-step pattern.",
-  "strudelCode": "s(\"{{machine}}\").struct(\"{{pattern}}\").speed({{tune}}).shape({{drive}}).release({{decay}}).gain({{gain}}).room({{room}})",
+  "strudelCode": "s(\"{{machine}}\"){{extTrig ? : .struct(\"{{pattern}}\")}}.speed({{tune}}).shape({{drive}}).release({{decay}}).gain({{gain}}).room({{room}})",
   "params": [
     { "id": "machine", "label": "Machine", "type": "select", "options": ["808bd", "909"], "default": "909", "showInNodeView": true },
+    { "id": "extTrig", "label": "Ext Trig", "type": "toggle", "default": false },
     {
       "id": "pattern",
       "label": "Pattern",
